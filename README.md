@@ -15,5 +15,5 @@ Goals:
 
 - Reusability
 	- Model ctor should take layers wanted and size requirements 
-	- Same model should be usably for any VAE needs 	
+	- Same model should be reusable for any VAE needs 	
 

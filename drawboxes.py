@@ -5,9 +5,9 @@ class Canvas:
 	def __init__(self, height, width):
 		self.height = height
 		self.width = width
-		self.canvas = np.zeros((height,width))
+		self.canvas = np.ones((height,width))
 	def add_box(self, r, c, w, h):
-		self.canvas[r:min(r+h,self.height-1),c:min(c+w,self.width-1)] = 1
+		self.canvas[r:min(r+h,self.height-1),c:min(c+w,self.width-1)] = 0
 	def draw(self):
 		plt.imshow(self.canvas,cmap='gray')
 		plt.show()
@@ -19,8 +19,8 @@ def get_dataset(size):
 		c = Canvas(size,size)
 		c.add_box(np.random.randint(0,size),
 				  np.random.randint(0,size),
-				  np.random.randint(0,size),
-				  np.random.randint(0,size))
+				  np.random.randint(size//2,size),
+				  np.random.randint(size//2,size))
 		data.append(c.canvas)
 	return np.asarray(data)
 

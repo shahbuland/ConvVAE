@@ -24,7 +24,7 @@ class VAE:
 
 		self.model = VAEmodel(input_size, latent_dim, CHANNELS,
 					 H_SIZE, use_upsampling, use_bn, use_dropout, dp_prob)
-		#self.model.cuda()
+		self.model.cuda()
 		self.model.apply(weights_init_normal)
 
 		self.opt = torch.optim.Adam(self.model.parameters(), lr=2e-4, betas=(0.5,0.999))
@@ -70,6 +70,7 @@ class VAE:
 			# get data
 			inds = randint(batch_size, 0, total_size - 1)
 			batch = data[inds]
+			batch = batch.cuda()
 			# input and target are both batch, run it through the VAE
 			rec_batch, mus, logvars = self.model(batch)
 			# reset optimizer

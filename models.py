@@ -75,8 +75,8 @@ class Encoder(nn.Module):
 
 	# get a vector from mus and logvars
 	def sample(self,mu,logvar):
-		sigma = torch.exp(0.5*logvar)
-		eps = torch.randn(*mu.size()) # ~ N(0,1)
+		sigma = torch.exp(0.5*logvar).cuda()
+		eps = torch.randn(*mu.size()).cuda() # ~ N(0,1)
 		z = mu + sigma*eps # ~ N(mu, std)
 		return z
 

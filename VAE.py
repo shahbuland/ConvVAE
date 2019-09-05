@@ -30,7 +30,9 @@ class VAE:
 		self.opt = torch.optim.Adam(self.model.parameters(), lr=2e-4, betas=(0.5,0.999))
 		
 	def load(self,path):
-		try: self.model.load_state_dict(torch.load(path))
+		try: 
+			self.model.load_state_dict(torch.load(path))
+			print("Weights Loaded")
 		except: print("No pt file found") 
 
 	def save(self):
@@ -57,6 +59,22 @@ class VAE:
 		
 		plt.savefig(title+".png")
 		plt.close()
+
+	def encode(self, x):
+		return self.model.E(x)[0]
+	
+	def decode(self, x):
+		return self.model.D(x)
+	
+	def decode_np(self,x):
+		# Just two numbers
+		t = torch.Tensor([[x[0],x[1]]])
+		t = t.float().cuda()
+		decoded_t = self.decode(t) # [1, 64, 64, 1]
+		decoded_x = decoded_t.detach().cpu().numpy()
+		decoded_x = np.squeeze(decoded_x)
+		decoded_x = 0.5*decoded_x + 1
+		return decoded_x
 
 	def train(self, data, iterations, batch_size,
 			  sample_interval = 50, log_interval = 10, save_interval = 250):

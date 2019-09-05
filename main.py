@@ -9,5 +9,5 @@ data = np.moveaxis(data,3,1)
 data = data*2 - 1
 print(data.shape)
 data = torch.Tensor(data).float()
-thingy = VAE(64,4, use_bn = True)
+thingy = VAE(64,2, use_bn = True)
 thingy.train(data, 1000, 4)

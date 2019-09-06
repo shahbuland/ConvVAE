@@ -94,6 +94,7 @@ class VAE:
 			# reset optimizer
 			self.opt.zero_grad()
 			# get losses
+			print(list(batch.shape), list(rec_batch.shape))
 			rec_loss = nn.MSELoss()(batch, rec_batch)
 			kl_loss = self.kl_loss_weight*KL_Loss(mus,logvars)
 			loss = rec_loss + kl_loss

@@ -16,15 +16,17 @@ import numpy as np
 class VAE:
 	def __init__(self,input_size,latent_dim,
 				 CHANNELS=1, H_SIZE=4, kl_loss_weight=1,
-				 use_upsampling=False, use_bn=False, use_dropout=False, dp_prob=0.25):
+				 use_upsampling=False, use_bn=False, use_dropout=False, dp_prob=0.25,
+				 CUDA=False):
 		
 		# constants
 		self.CHANNELS = CHANNELS
 		self.kl_loss_weight = kl_loss_weight
+		self.CUDA = CUDA
 
 		self.model = VAEmodel(input_size, latent_dim, CHANNELS,
 					 H_SIZE, use_upsampling, use_bn, use_dropout, dp_prob)
-		self.model.cuda()
+		if self.CUDA: self.model.cuda()
 		self.model.apply(weights_init_normal)
 
 		self.opt = torch.optim.Adam(self.model.parameters(), lr=2e-4, betas=(0.5,0.999))
@@ -67,9 +69,11 @@ class VAE:
 		return self.model.D(x)
 	
 	def decode_np(self,x):
+		# TODO: Figure out if x is array or single
 		# Just two numbers
 		t = torch.Tensor([[x[0],x[1]]])
-		t = t.float().cuda()
+		t = t.float()
+		if self.CUDA: t = t.cuda()
 		decoded_t = self.decode(t) # [1, 64, 64, 1]
 		decoded_x = decoded_t.detach().cpu().numpy()
 		decoded_x = np.squeeze(decoded_x)
@@ -88,7 +92,7 @@ class VAE:
 			# get data
 			inds = randint(batch_size, 0, total_size - 1)
 			batch = data[inds]
-			batch = batch.cuda()
+			if self.CUDA: batch = batch.cuda()
 			# input and target are both batch, run it through the VAE
 			rec_batch, mus, logvars = self.model(batch)
 			# reset optimizer

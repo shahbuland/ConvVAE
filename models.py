@@ -13,6 +13,7 @@ def get_ch_list_encoding(channels, size, h_size):
 		if f == channels: f = 64
 		else: f *= 2
 		ch.append(f)
+	print(ch)
 	return ch
 
 def get_ch_list_decoding(channels, h_size, h_filters, size):
@@ -23,6 +24,7 @@ def get_ch_list_decoding(channels, h_size, h_filters, size):
 		if f == 64: f = channels
 		else: f = f // 2
 		ch.append(f)
+	print(ch)
 	return ch
 
 # ENCODER MODEL
@@ -75,8 +77,9 @@ class Encoder(nn.Module):
 
 	# get a vector from mus and logvars
 	def sample(self,mu,logvar):
-		sigma = torch.exp(0.5*logvar).cuda()
-		eps = torch.randn(*mu.size()).cuda() # ~ N(0,1)
+		sigma = torch.exp(0.5*logvar)
+		eps = torch.randn(*mu.size()) # ~ N(0,1)
+		if mu.is_cuda: eps = eps.cuda()
 		z = mu + sigma*eps # ~ N(mu, std)
 		return z
 

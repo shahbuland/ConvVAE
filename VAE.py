@@ -13,6 +13,45 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Wrapper for VAE
+
+# USE GUIDE:
+
+# Constructor:
+# Vals: 
+#	CHANNELS - Number of colour channels in samples
+#	H_SIZE - Size of data before being flattened for latent vector
+#	kl_loss_weight - Weight of KL Loss, dictates how hard the model
+# 					 focuses on objective of making latent space continuous
+#	dp_prob - Probability of dropout layers dropping actiation values
+# Flags:
+#	use_upsampling - Use upsampling (as opposed to transposed convolution)
+#	use_bn - Use batch normalization
+#	use_dropout - Use dropout in the decoder (can encourage generalization)
+
+# Load:
+#	Given path, loads weights
+
+# Save:
+#	Saves weights as "VAEparams.pt"
+
+# Drawsamples:
+#	Draws samples when given tensors X and Y
+#	Saves figure as file with "[title].png"
+
+# Encode:
+#	Encodes a pytorch tensor and returns latent vector
+
+# Decode:
+#	Decodes a pytorch tensor (latent vector) and returns constructed image
+
+# Encode_np/Decode_np:
+#	Same as above but work on numpy arrays
+
+# Train:
+#	Data - Input data to train on
+#	Iterations - Iterations for which to train
+#	Batch size - Size of batches
+#	Sample_interval, Log_interval, Save_interval, do what they say	
 class VAE:
 	def __init__(self,input_size,latent_dim,
 				 CHANNELS=1, H_SIZE=4, kl_loss_weight=1,

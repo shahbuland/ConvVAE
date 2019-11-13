@@ -5,26 +5,22 @@ import numpy as np
 
 # Gets list of channels required to get size (assumed int[3], and square)
 # separate for encoding (CHANNELSxHxW -> 512xH_SIZExH_SIZE)
+# Input is channels for input, size of input and desired h_size
 def get_ch_list_encoding(channels, size, h_size):
 	f = channels # Keep track of current filter count
 	ch = [f] # List of num filters (channels)
-	while size != h_size and size != 1:
+	while size >  h_size:
 		size = size // 2
 		if f == channels: f = 64
-		else: f *= 2
+		elif f < 512: f *= 2
 		ch.append(f)
 	print(ch)
 	return ch
 
-def get_ch_list_decoding(channels, h_size, h_filters, size):
-	f = h_filters
-	ch = [f]
-	while h_size != size:
-		h_size *= 2
-		if f == 64: f = channels
-		else: f = f // 2
-		ch.append(f)
-	print(ch)
+# Channels desired, h_size (same as above), h_filters, size
+def get_ch_list_decoding(channels, size, h_size):
+	ch = get_ch_list_encoding(channels,size,h_size)
+	ch.reverse()
 	return ch
 
 # ENCODER MODEL
@@ -46,24 +42,24 @@ class Encoder(nn.Module):
 		
 		# Need to figure out required channels to get from
 		# [CHANNELS,input_size,input_size] -> [512,H_SIZE,H_SIZE]
-		ch = get_ch_list_encoding(CHANNELS, input_size, H_SIZE)
-		self.n_layers = len(ch) - 1
+		self.ch = get_ch_list_encoding(CHANNELS, input_size, H_SIZE)
+		self.n_layers = len(self.ch) - 1
 		# Module lists for layers
 		self.conv = nn.ModuleList()
 		self.bn = nn.ModuleList() #if batch norm is enabled
 		self.dp = nn.ModuleList() #if dropout is enabled
 		# fc layers (one for mu, one for logvar)
-		self.mu_fc = nn.Linear(512*H_SIZE*H_SIZE, latent_dim)
-		self.logvar_fc = nn.Linear(512*H_SIZE*H_SIZE, latent_dim)
+		self.mu_fc = nn.Linear(self.ch[-1]*H_SIZE*H_SIZE, latent_dim)
+		self.logvar_fc = nn.Linear(self.ch[-1]*H_SIZE*H_SIZE, latent_dim)
 	
 		# Make conv layers
 		for i in range(self.n_layers):
-			self.conv.append(self.myconv(ch[i],ch[i+1]))
+			self.conv.append(self.myconv(self.ch[i],self.ch[i+1]))
 
 		# Make batch norm layers
 		if use_bn:
 			for i in range(self.n_layers):
-				self.bn.append(nn.BatchNorm2d(ch[i+1]))
+				self.bn.append(nn.BatchNorm2d(self.ch[i+1]))
 
 		# Make dropout layers
 		if use_dropout:
@@ -89,7 +85,7 @@ class Encoder(nn.Module):
 			x = F.relu(x)
 			if self.use_bn: x = self.bn[i](x)
 			if self.use_dropout: x= self.dp[i](x)
-		x = x.view(-1,512*self.H_SIZE*self.H_SIZE)
+		x = x.view(-1,self.ch[-1]*self.H_SIZE*self.H_SIZE)
 		mu = self.mu_fc(x)
 		logvar = self.logvar_fc(x)
 		z = self.sample(mu, logvar)
@@ -114,24 +110,24 @@ class Decoder(nn.Module):
 		self.dp_prob = dp_prob
 		
 		# Need to figure out required channels to get from
-		# [CHANNELS,input_size,input_size] -> [512,H_SIZE,H_SIZE]
-		ch = get_ch_list_decoding(CHANNELS, H_SIZE, 512, input_size)
-		self.n_layers = len(ch) - 1
+		# [H_CHANNELS,H_SIZE,H_SIZE] -> [CHANNELS, input_size, input_size]
+		self.ch = get_ch_list_decoding(CHANNELS, input_size, H_SIZE)
+		self.n_layers = len(self.ch) - 1
 		# Module lists for layers
 		self.conv = nn.ModuleList()
 		self.bn = nn.ModuleList() #if batch norm is enabled
 		self.dp = nn.ModuleList() #if dropout is enabled
 		
-		self.fc = nn.Linear(latent_dim,512*H_SIZE*H_SIZE)
+		self.fc = nn.Linear(latent_dim,self.ch[0]*H_SIZE*H_SIZE)
 
 		# Make conv layers
 		for i in range(self.n_layers):
-			self.conv.append(self.myconv(ch[i],ch[i+1]))
+			self.conv.append(self.myconv(self.ch[i],self.ch[i+1]))
 
 		# Make batch norm layers
 		if use_bn:
 			for i in range(self.n_layers):
-				self.bn.append(nn.BatchNorm2d(ch[i+1]))
+				self.bn.append(nn.BatchNorm2d(self.ch[i+1]))
 
 		# Make dropout layers
 		if use_dropout:
@@ -142,12 +138,15 @@ class Decoder(nn.Module):
 		self.up = nn.Upsample(scale_factor=2)
 
 	def myconv(self, fi, fo, k=4,s=2,p=1):
-		if self.use_upsampling: return nn.Conv2d(fi,fo,k,1,p)
-		else: return nn.ConvTranspose2d(fi,fo,k,s,p)
+		if self.use_upsampling:
+			return nn.Conv2d(fi,fo,k,1,p)
+		else:
+			return nn.ConvTranspose2d(fi,fo,k,s,p) 
+			# For some reason this causes an error
 
 	def forward(self, x):
 		x = self.fc(x)
-		x = x.view(-1,512,self.H_SIZE,self.H_SIZE)
+		x = x.view(-1,self.ch[0],self.H_SIZE,self.H_SIZE)
 		for i in range(self.n_layers):
 			if self.use_upsampling: x = self.up(x)
 			x = self.conv[i](x)

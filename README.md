@@ -1,6 +1,6 @@
 # ConvVAE
 Modular and reusable Conv VAE
-
+Comes with script to make images of boxes to test model
 Goals: 
 - Modularity:
 	- To use, should just have to instantiate model

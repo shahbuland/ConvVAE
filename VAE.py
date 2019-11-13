@@ -97,8 +97,8 @@ class VAE:
 		for i in range((X.shape)[0]):
 			axs[i][0].imshow(X[i],cmap=cmap)
 			axs[i][1].imshow(Y[i],cmap=cmap)
-		
-		plt.savefig(title+".png")
+		plt.show()	
+		#plt.savefig(title+".png")
 		plt.close()
 
 	def encode(self, x):
@@ -137,7 +137,6 @@ class VAE:
 			# reset optimizer
 			self.opt.zero_grad()
 			# get losses
-			print(list(batch.shape), list(rec_batch.shape))
 			rec_loss = nn.MSELoss()(batch, rec_batch)
 			kl_loss = self.kl_loss_weight*KL_Loss(mus,logvars)
 			loss = rec_loss + kl_loss
@@ -147,12 +146,12 @@ class VAE:
 			self.opt.step()
 		
 			# Logging and stuff
-			if i % sample_interval == 0:
+			if (i+1) % sample_interval == 0:
 				print("Drawing samples")
 				self.drawsamples(str(i), batch, rec_batch)
-			if i % log_interval == 0:
-				print("[",i,"/",iterations,"]", "Rec Loss:", rec_loss.item(), "KL Loss:", kl_loss.item())
-			if i % save_interval == 0:
+			if (i+1) % log_interval == 0:
+				print("[",i+1,"/",iterations,"]", "Rec Loss:", rec_loss.item(), "KL Loss:", kl_loss.item())
+			if (i+1) % save_interval == 0:
 				print("Saving parameters...")
 				self.save()
 					
